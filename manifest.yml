@@ -1,0 +1,16 @@
+# Cloud Foundry deployment manifest for the currency converter MCP server.
+# Deploy with: cf push
+# Plain Node.js/JavaScript app - the nodejs_buildpack runs `npm install` then `npm start`.
+---
+applications:
+  - name: joule-mcp-currency-converter
+    path: .
+    buildpacks:
+      - nodejs_buildpack
+    command: npm start
+    memory: 256M
+    instances: 1
+    env:
+      NODE_ENV: production
+    services:
+      - joule-mcp-xsuaa

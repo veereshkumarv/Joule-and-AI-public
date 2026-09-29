@@ -1,0 +1,25 @@
+{
+  "xsappname": "joule-mcp-tools",
+  "tenant-mode": "dedicated",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.MCPToolCaller",
+      "description": "Allows calling the Joule MCP tools server"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "MCPToolCaller",
+      "description": "Role for clients (e.g. BTP destinations) allowed to call the MCP tools",
+      "scope-references": [
+        "$XSAPPNAME.MCPToolCaller"
+      ]
+    }
+  ],
+  "oauth2-configuration": {
+    "credential-types": [
+      "binding-secret",
+      "x509"
+    ]
+  }
+}
