@@ -3,7 +3,7 @@ import passport from "passport";
 import xsenv from "@sap/xsenv";
 import xssec from "@sap/xssec";
 
-const { JWTStrategy } = xssec;
+const { JWTStrategy } = xssec.v3;
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -15,8 +15,10 @@ function configureAuth() {
     const { uaa } = xsenv.getServices({ uaa: { tag: "xsuaa" } });
     passport.use(new JWTStrategy(uaa));
     return passport.authenticate("JWT", { session: false });
-  } catch {
-    console.warn("[auth] No bound XSUAA service found (joule-mcp-xsuaa) — running /mcp without authentication.");
+  } catch (error) {
+    console.warn(
+      `[auth] No bound XSUAA service found (joule-mcp-xsuaa) — running /mcp without authentication. Cause: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return null;
   }
 }
