@@ -3,20 +3,23 @@ import passport from "passport";
 import xsenv from "@sap/xsenv";
 import xssec from "@sap/xssec";
 
-const { JWTStrategy } = xssec;
+const { JWTStrategy } = xssec.v3;
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import { convertCurrency } from "./currency.js";
 import { getCurrentWeather } from "./weather.js";
+import { getLatestWorldNews } from "./news.js";
 
 function configureAuth() {
   try {
     const { uaa } = xsenv.getServices({ uaa: { tag: "xsuaa" } });
     passport.use(new JWTStrategy(uaa));
     return passport.authenticate("JWT", { session: false });
-  } catch {
-    console.warn("[auth] No bound XSUAA service found (joule-mcp-xsuaa) — running /mcp without authentication.");
+  } catch (error) {
+    console.warn(
+      `[auth] No bound XSUAA service found (joule-mcp-xsuaa) — running /mcp without authentication. Cause: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return null;
   }
 }
@@ -83,6 +86,35 @@ function createMcpServer() {
         const message = error instanceof Error ? error.message : String(error);
         return {
           content: [{ type: "text", text: `Weather lookup failed: ${message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "get_world_news",
+    {
+      description:
+        "Get a rundown of the latest world news headlines from BBC News, with title, link, and publish time for each.",
+      inputSchema: {
+        limit: z.number().int().min(1).max(20).default(5).describe("How many headlines to return (1-20, default 5)"),
+      },
+    },
+    async ({ limit }) => {
+      try {
+        const items = await getLatestWorldNews(limit);
+        const text = items
+          .map((item, index) => `${index + 1}. ${item.title} (${item.publishedAt})\n   ${item.link}`)
+          .join("\n");
+
+        return {
+          content: [{ type: "text", text: `Latest world news:\n${text}` }],
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          content: [{ type: "text", text: `World news lookup failed: ${message}` }],
           isError: true,
         };
       }

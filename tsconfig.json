@@ -1,0 +1,39 @@
+{
+  // "compilerOptions" controls how TypeScript checks and (optionally) compiles your code.
+  "compilerOptions": {
+    // Which JS version the compiled output should target. ES2022 supports top-level await,
+    // class fields, etc. — matches what Node 20+ (our "engines" requirement) understands natively.
+    "target": "ES2022",
+
+    // Our package.json has "type": "module", so Node expects real ES modules (import/export),
+    // not CommonJS (require). "NodeNext" tells TS to follow Node's own module resolution rules
+    // for ESM, including requiring explicit file extensions in relative imports (see index.ts).
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    // "strict" turns on every strict type-checking flag at once (strictNullChecks, noImplicitAny, etc).
+    // Always start new TypeScript projects with this on — it's the single biggest value of using TS at all.
+    "strict": true,
+
+    // Lets TS import CommonJS packages (most npm packages) with `import x from "pkg"` syntax
+    // cleanly, instead of needing `import * as x from "pkg"`.
+    "esModuleInterop": true,
+
+    // We import currency.js/weather.js, which are still plain JavaScript (not yet
+    // converted in this teaching pass). "allowJs" lets TS resolve and loosely type
+    // those imports by reading the JS directly, instead of erroring that no .d.ts
+    // declaration file exists for them.
+    "allowJs": true,
+
+    // We're not compiling to JS for deployment yet (this is the learning/parallel-file stage),
+    // so "noEmit" just type-checks without writing any .js output files.
+    "noEmit": true,
+
+    // Where TS looks for type declaration files bundled with our installed packages.
+    "skipLibCheck": true,
+
+    // Only type-check source files, not test output or node_modules.
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts"]
+}

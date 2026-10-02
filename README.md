@@ -2,20 +2,23 @@
 
 A learning project: a small custom [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server exposing tools meant to be plugged into an SAP Joule Studio agent as a custom tool integration (instead of only using Joule's built-in tools).
 
-Plain Node.js / JavaScript, no TypeScript, no Python anywhere in the stack.
+Plain Node.js / JavaScript deployment, no Python anywhere in the stack. `src/index.ts` is a parallel, heavily-commented TypeScript teaching copy of `src/index.js` — it is not wired into `npm start`/`cf push`.
 
 ## What it does
 
-Exposes two MCP tools:
+Exposes three MCP tools:
 
 - **`convert_currency`** — converts an amount between two ISO 4217 currency codes (e.g. `USD` → `EUR`) using live rates from the free [Frankfurter API](https://frankfurter.dev) (no API key required).
 - **`get_weather`** — gets current weather (temperature, humidity, wind, conditions) for a city/place name, using the free [Open-Meteo API](https://open-meteo.com) (no API key required).
+- **`get_world_news`** — gets the latest world news headlines (title, link, publish time) from the free [BBC World News RSS feed](https://feeds.bbci.co.uk/news/world/rss.xml) (no API key required).
 
 ## Project layout
 
 - `src/currency.js` — Frankfurter API client (`getExchangeRate`, `convertCurrency`).
 - `src/weather.js` — Open-Meteo geocoding + forecast client (`geocodeLocation`, `getCurrentWeather`).
+- `src/news.js` — BBC World News RSS client (`getLatestWorldNews`), parses the feed's XML with no extra dependency.
 - `src/index.js` — Express app that hosts the MCP server over the Streamable HTTP transport at `POST/GET/DELETE /mcp`, in stateless mode (no session store — each request gets a fresh server instance).
+- `src/index.ts` / `tsconfig.json` / `src/types/sap-xsenv.d.ts` — TypeScript teaching copy of `index.js` (see comments inline); check it with `npx tsc --noEmit`.
 - `manifest.yml` / `.cfignore` — Cloud Foundry deployment scaffold for SAP BTP.
 
 ## Run locally
@@ -36,7 +39,7 @@ The server listens on `http://localhost:3000/mcp` (or `$PORT` if set).
 npm test
 ```
 
-Runs [test/mcp-server.test.js](test/mcp-server.test.js) with Node's built-in test runner: spawns the server on a separate port, then exercises `tools/list` and `tools/call` for both `convert_currency` (including an invalid-currency-code error case) and `get_weather` against the live Frankfurter/Open-Meteo APIs. Run this once locally before every `cf push`.
+Runs [test/mcp-server.test.js](test/mcp-server.test.js) with Node's built-in test runner: spawns the server on a separate port, then exercises `tools/list` and `tools/call` for `convert_currency` (including an invalid-currency-code error case), `get_weather`, and `get_world_news` against the live Frankfurter/Open-Meteo/BBC APIs. Run this once locally before every `cf push`.
 
 ### With curl
 
@@ -58,6 +61,12 @@ curl -s -X POST http://localhost:3000/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_weather","arguments":{"location":"London"}}}'
+
+# Call the world news tool
+curl -s -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_world_news","arguments":{"limit":5}}}'
 ```
 
 ### With MCP Inspector

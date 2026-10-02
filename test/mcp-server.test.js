@@ -52,11 +52,11 @@ async function callMcp(method, params) {
   return JSON.parse(raw);
 }
 
-test("tools/list exposes convert_currency and get_weather", async () => {
+test("tools/list exposes convert_currency, get_weather, and get_world_news", async () => {
   const { result } = await callMcp("tools/list", {});
   const names = result.tools.map((tool) => tool.name).sort();
 
-  assert.deepEqual(names, ["convert_currency", "get_weather"]);
+  assert.deepEqual(names, ["convert_currency", "get_weather", "get_world_news"]);
 });
 
 test("convert_currency converts an amount between two currencies", async () => {
@@ -87,4 +87,14 @@ test("get_weather returns current conditions for a known location", async () => 
 
   assert.equal(result.isError, undefined);
   assert.match(result.content[0].text, /^Weather in London.*°C, humidity \d+%, wind [\d.]+ km\/h$/);
+});
+
+test("get_world_news returns the requested number of headlines", async () => {
+  const { result } = await callMcp("tools/call", {
+    name: "get_world_news",
+    arguments: { limit: 3 },
+  });
+
+  assert.equal(result.isError, undefined);
+  assert.match(result.content[0].text, /^Latest world news:\n1\. .+\n2\. .+\n3\. .+$/s);
 });
